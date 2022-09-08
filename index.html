@@ -16,9 +16,33 @@
 
 
 <body>
+  <!--Header-->
     <header class="bg-dark text-white text-center p-2">
       <h1>Your Daily Weather</h1>
     </header>
+
+    <!--Main container for webpage-->
+    <div id="content" class="container">
+      <div class="row">
+
+        <!--Search box-->
+        <div id="content-left" class="col-md-3">
+          <form>
+            <label for="search-city">Search for a City:</label>
+            <div class="form-row">
+              <input id="search-city" class="form-control" name="city" value="Nashville"></input>
+              <button id="search-button" class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+            </div>
+          </form>
+          <div id="search-error"></div>
+          <!--Prior searched cities-->
+          <ul id="city-results" class="list-group mt-4"></ul>
+          <!--Clear storage button-->
+          <a id="clear-storage" href="#"></a>
+        </div>
+
+      </div>
+    </div>
 
     <script src="./script.js"></script>
 </body>

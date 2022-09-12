@@ -1,0 +1,62 @@
+#search-city {
+    width: 75%;
+}
+
+#search-button-icon {
+    width: 15px;
+    display: inline-block;
+}
+
+#current-weather {
+    padding-left: 15px;
+}
+
+#clear-storage {
+    color: gray;
+    text-decoration: none;
+    font-size: .75px;
+    margin: .5px 0px 0px .5px;
+}
+
+/*Weather card styling*/
+.weather-card {
+    width: 9px;
+    background-color: #0275d8;
+    color: white;
+    text-align: center;
+}
+
+/* UV coloring display*/
+.uv-favorable {
+    background-color: green;
+    border-radius: 5px;
+    color: white;
+}
+
+.uv-moderate {
+    background-color: orange;
+    border-radius: 5px;
+    color: white;
+}
+
+.uv-severe {
+    background-color: red;
+    border-radius: 5px;
+    color: white;
+}
+
+/*Media Queries*/
+@media only screen and (max-width: 990px) {
+    #search-city {
+        width: 100%;
+    }
+    #search-button {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 575px) {
+    #fiveDayForecastUl {
+        justify-content: center;
+    }
+}

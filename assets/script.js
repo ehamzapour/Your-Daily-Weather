@@ -17,15 +17,8 @@ function currentCondition(city){
         $("#cityDetail").empty();
         
         var iconCode = cityWeatherResponse.weather[0].icon;
-        var iconURL = `https://openweathermap.org/img/w/${iconCode}.png`;
+        //var iconURL = `https://openweathermap.org/img/w/${iconCode}.png`;
 
-        // WHEN I view current weather conditions for that city
-        // THEN I am presented with the city name
-        // the date
-        // an icon representation of weather conditions
-        // the temperature
-        // the humidity
-        // the wind speed
         var currentCity = $(`
             <h2 id="currentCity">
                 ${cityWeatherResponse.name} ${today} <img src="${iconURL}" alt="${cityWeatherResponse.weather[0].description}" />

@@ -1,9 +1,9 @@
 // Set global variables, including Open Weather Maps API Key
-var owmAPI = "788d5638d7c8e354a162d6c9747d1bdf";
+var owmAPI = "3fcff7b5f33b687ae3ffbd83ce4806e3";
 var currentCity = "";
 var lastCity = "";
 
-// Error handler for fetch, trying to mimic the AJAX .fail command: https://www.tjvantoll.com/2015/09/13/fetch-and-errors/
+// Error for fetch
 var handleErrors = (response) => {
     if (!response.ok) {
         throw Error(response.statusText);
@@ -13,7 +13,6 @@ var handleErrors = (response) => {
 
 // Function to get and display the current conditions on Open Weather Maps
 var getCurrentConditions = (event) => {
-    // Obtain city name from the search box
     let city = $('#search-city').val();
     currentCity= $('#search-city').val();
     // Set the queryURL to fetch from API using weather search - added units=imperial to fix

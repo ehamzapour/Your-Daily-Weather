@@ -1,5 +1,14 @@
+#header{
+    background-size: cover;
+    background-position-y: 40%;
+    color:white;
+    background-color:rgb(83, 83, 83);
+    position:relative !important;
+}
+
+
 #search-city {
-    width: 75%;
+    width: 80%;
 }
 
 #search-button-icon {
@@ -14,13 +23,13 @@
 #clear-storage {
     color: gray;
     text-decoration: none;
-    font-size: .75px;
-    margin: .5px 0px 0px .5px;
+    font-size: .75em;
+    margin: .5em 0em 0em .5em;
 }
 
 /*Weather card styling*/
 .weather-card {
-    width: 9px;
+    width: 9rem;
     background-color: #0275d8;
     color: white;
     text-align: center;

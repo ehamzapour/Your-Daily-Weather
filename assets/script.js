@@ -1,155 +1,207 @@
 // Set global variables, including Open Weather Maps API Key
-var apiKey = "3fcff7b5f33b687ae3ffbd83ce4806e3";
-var currentCity = moment().format('L');
-var lastCity = [];
+var owmAPI = "788d5638d7c8e354a162d6c9747d1bdf";
+var currentCity = "";
+var lastCity = "";
 
-//Function for current condition
-function currentCondition(city){
-    var queryURL = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}`;
-
-    $.ajax({
-        url: queryURL,
-        method: "GET"
-    }).then(function(cityWeatherResponse) {
-        console.log(cityWeatherResponse);
-        
-        $("#weatherContent").css("display", "block");
-        $("#cityDetail").empty();
-        
-        var iconCode = cityWeatherResponse.weather[0].icon;
-        //var iconURL = `https://openweathermap.org/img/w/${iconCode}.png`;
-
-        var currentCity = $(`
-            <h2 id="currentCity">
-                ${cityWeatherResponse.name} ${today} <img src="${iconURL}" alt="${cityWeatherResponse.weather[0].description}" />
-            </h2>
-            <p>Temperature: ${cityWeatherResponse.main.temp} °F</p>
-            <p>Humidity: ${cityWeatherResponse.main.humidity}\%</p>
-            <p>Wind Speed: ${cityWeatherResponse.wind.speed} MPH</p>
-        `);
-
-        $("#cityDetail").append(currentCity);
-
-        // UV index
-        var lat = cityWeatherResponse.coord.lat;
-        var lon = cityWeatherResponse.coord.lon;
-        var uviQueryURL = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`;
-
-        $.ajax({
-            url: uviQueryURL,
-            method: "GET"
-        }).then(function(uviResponse) {
-            console.log(uviResponse);
-
-            var uvIndex = uviResponse.value;
-            var uvIndexP = $(`
-                <p>UV Index: 
-                    <span id="uvIndexColor" class="px-2 py-2 rounded">${uvIndex}</span>
-                </p>
-            `);
-
-            $("#cityDetail").append(uvIndexP);
-
-            futureCondition(lat, lon);
-
-            // WHEN I view the UV index
-            // THEN I am presented with a color that indicates whether the conditions are favorable, moderate, or severe
-            // 0-2 green#3EA72D, 3-5 yellow#FFF300, 6-7 orange#F18B00, 8-10 red#E53210, 11+violet#B567A4
-            if (uvIndex >= 0 && uvIndex <= 2) {
-                $("#uvIndexColor").css("background-color", "#3EA72D").css("color", "white");
-            } else if (uvIndex >= 3 && uvIndex <= 5) {
-                $("#uvIndexColor").css("background-color", "#FFF300");
-            } else if (uvIndex >= 6 && uvIndex <= 7) {
-                $("#uvIndexColor").css("background-color", "#F18B00");
-            } else if (uvIndex >= 8 && uvIndex <= 10) {
-                $("#uvIndexColor").css("background-color", "#E53210").css("color", "white");
-            } else {
-                $("#uvIndexColor").css("background-color", "#B567A4").css("color", "white"); 
-            };  
-        });
-    });
-}
-
-// function for future condition
-function futureCondition(lat, lon) {
-
-    // THEN I am presented with a 5-day forecast
-    var futureURL = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=imperial&exclude=current,minutely,hourly,alerts&appid=${apiKey}`;
-
-    $.ajax({
-        url: futureURL,
-        method: "GET"
-    }).then(function(futureResponse) {
-        console.log(futureResponse);
-        $("#fiveDay").empty();
-        
-        for (let i = 1; i < 6; i++) {
-            var cityInfo = {
-                date: futureResponse.daily[i].dt,
-                icon: futureResponse.daily[i].weather[0].icon,
-                temp: futureResponse.daily[i].temp.day,
-                humidity: futureResponse.daily[i].humidity
-            };
-
-            var currDate = moment.unix(cityInfo.date).format("MM/DD/YYYY");
-            var iconURL = `<img src="https://openweathermap.org/img/w/${cityInfo.icon}.png" alt="${futureResponse.daily[i].weather[0].main}" />`;
-
-            // displays the date
-            // an icon representation of weather conditions
-            // the temperature
-            // the humidity
-            var futureCard = $(`
-                <div class="pl-3">
-                    <div class="card pl-3 pt-3 mb-3 bg-primary text-light" style="width: 12rem;>
-                        <div class="card-body">
-                            <h5>${currDate}</h5>
-                            <p>${iconURL}</p>
-                            <p>Temp: ${cityInfo.temp} °F</p>
-                            <p>Humidity: ${cityInfo.humidity}\%</p>
-                        </div>
-                    </div>
-                <div>
-            `);
-
-            $("#fiveDay").append(futureCard);
-        }
-    }); 
-}
-
-// add on click event listener 
-$("#searchBtn").on("click", function(event) {
-    event.preventDefault();
-
-    var city = $("#enterCity").val().trim();
-    currentCondition(city);
-    if (!searchHistoryList.includes(city)) {
-        searchHistoryList.push(city);
-        var searchedCity = $(`
-            <li class="list-group-item">${city}</li>
-            `);
-        $("#searchHistory").append(searchedCity);
-    };
-    
-    localStorage.setItem("city", JSON.stringify(searchHistoryList));
-    console.log(searchHistoryList);
-});
-
-// WHEN I click on a city in the search history
-// THEN I am again presented with current and future conditions for that city
-$(document).on("click", ".list-group-item", function() {
-    var listCity = $(this).text();
-    currentCondition(listCity);
-});
-
-// WHEN I open the weather dashboard
-// THEN I am presented with the last searched city forecast
-$(document).ready(function() {
-    var searchHistoryArr = JSON.parse(localStorage.getItem("city"));
-
-    if (searchHistoryArr !== null) {
-        var lastSearchedIndex = searchHistoryArr.length - 1;
-        var lastSearchedCity = searchHistoryArr[lastSearchedIndex];
-        currentCondition(lastSearchedCity);
-        console.log(`Last searched city: ${lastSearchedCity}`);
+// Error for fetch
+var handleErrors = (response) => {
+    if (!response.ok) {
+        throw Error(response.statusText);
     }
+    return response;
+}
+
+// Function to get and display the current conditions on Open Weather Maps
+var getCurrentConditions = (event) => {
+    let city = $('#search-city').val();
+    currentCity= $('#search-city').val();
+    // Set the queryURL to fetch from API using weather search - added units=imperial to fix
+    let queryURL ="https://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=imperial" + "&APPID=" + owmAPI;
+    fetch(queryURL)
+    .then(handleErrors)
+    .then((response) => {
+        return response.json();
+    })
+    .then((response) => {
+        // Save city to local storage
+        saveCity(city);
+        $('#search-error').text("");
+        // Create icon for the current weather using Open Weather Maps
+        let currentWeatherIcon="https://openweathermap.org/img/w/" + response.weather[0].icon + ".png";
+        // Offset UTC timezone - using moment.js
+        let currentTimeUTC = response.dt;
+        let currentTimeZoneOffset = response.timezone;
+        let currentTimeZoneOffsetHours = currentTimeZoneOffset / 60 / 60;
+        let currentMoment = moment.unix(currentTimeUTC).utc().utcOffset(currentTimeZoneOffsetHours);
+        // Render cities list
+        renderCities();
+        // Obtain the 5day forecast for the searched city
+        getFiveDayForecast(event);
+        // Set the header text to the found city name
+        $('#header-text').text(response.name);
+        // HTML for the results of search
+        let currentWeatherHTML = `
+            <h3>${response.name} ${currentMoment.format("(MM/DD/YY)")}<img src="${currentWeatherIcon}"></h3>
+            <ul class="list-unstyled">
+                <li>Temperature: ${response.main.temp}&#8457;</li>
+                <li>Humidity: ${response.main.humidity}%</li>
+                <li>Wind Speed: ${response.wind.speed} mph</li>
+                <li id="uvIndex">UV Index:</li>
+            </ul>`;
+        // Append the results to the DOM
+        $('#current-weather').html(currentWeatherHTML);
+        // Get the latitude and longitude for the UV search from Open Weather Maps API
+        let latitude = response.coord.lat;
+        let longitude = response.coord.lon;
+        let uvQueryURL = "api.openweathermap.org/data/2.5/uvi?lat=" + latitude + "&lon=" + longitude + "&APPID=" + owmAPI;
+        // API solution for Cross-origin resource sharing (CORS) error: https://cors-anywhere.herokuapp.com/
+        uvQueryURL = "https://cors-anywhere.herokuapp.com/" + uvQueryURL;
+        // Fetch the UV information and build the color display for the UV index
+        fetch(uvQueryURL)
+        .then(handleErrors)
+        .then((response) => {
+            return response.json();
+        })
+        .then((response) => {
+            let uvIndex = response.value;
+            $('#uvIndex').html(`UV Index: <span id="uvVal"> ${uvIndex}</span>`);
+            if (uvIndex>=0 && uvIndex<3){
+                $('#uvVal').attr("class", "uv-favorable");
+            } else if (uvIndex>=3 && uvIndex<8){
+                $('#uvVal').attr("class", "uv-moderate");
+            } else if (uvIndex>=8){
+                $('#uvVal').attr("class", "uv-severe");
+            }
+        });
+    })
+}
+
+// Function to obtain the five day forecast and display to HTML
+var getFiveDayForecast = (event) => {
+    let city = $('#search-city').val();
+    // Set up URL for API search using forecast search
+    let queryURL = "https://api.openweathermap.org/data/2.5/forecast?q=" + city + "&units=imperial" + "&APPID=" + owmAPI;
+    // Fetch from API
+    fetch(queryURL)
+        .then (handleErrors)
+        .then((response) => {
+            return response.json();
+        })
+        .then((response) => {
+        // HTML template
+        let fiveDayForecastHTML = `
+        <h2>5-Day Forecast:</h2>
+        <div id="fiveDayForecastUl" class="d-inline-flex flex-wrap ">`;
+        // Loop over the 5 day forecast and build the template HTML using UTC offset and Open Weather Map icon
+        for (let i = 0; i < response.list.length; i++) {
+            let dayData = response.list[i];
+            let dayTimeUTC = dayData.dt;
+            let timeZoneOffset = response.city.timezone;
+            let timeZoneOffsetHours = timeZoneOffset / 60 / 60;
+            let thisMoment = moment.unix(dayTimeUTC).utc().utcOffset(timeZoneOffsetHours);
+            let iconURL = "https://openweathermap.org/img/w/" + dayData.weather[0].icon + ".png";
+            // Only displaying mid-day forecasts
+            if (thisMoment.format("HH:mm:ss") === "11:00:00" || thisMoment.format("HH:mm:ss") === "12:00:00" || thisMoment.format("HH:mm:ss") === "13:00:00") {
+                fiveDayForecastHTML += `
+                <div class="weather-card card m-2 p0">
+                    <ul class="list-unstyled p-3">
+                        <li>${thisMoment.format("MM/DD/YY")}</li>
+                        <li class="weather-icon"><img src="${iconURL}"></li>
+                        <li>Temp: ${dayData.main.temp}&#8457;</li>
+                        <br>
+                        <li>Humidity: ${dayData.main.humidity}%</li>
+                    </ul>
+                </div>`;
+            }
+        }
+        // Build the HTML template
+        fiveDayForecastHTML += `</div>`;
+        // Append the five-day forecast to the DOM
+        $('#five-day-forecast').html(fiveDayForecastHTML);
+    })
+}
+
+// Function to save the city to localStorage
+var saveCity = (newCity) => {
+    let cityExists = false;
+    // Check if City exists in local storage
+    for (let i = 0; i < localStorage.length; i++) {
+        if (localStorage["cities" + i] === newCity) {
+            cityExists = true;
+            break;
+        }
+    }
+    // Save to localStorage if city is new
+    if (cityExists === false) {
+        localStorage.setItem('cities' + localStorage.length, newCity);
+    }
+}
+
+// Render the list of searched cities
+var renderCities = () => {
+    $('#city-results').empty();
+    // If localStorage is empty
+    if (localStorage.length===0){
+        if (lastCity){
+            $('#search-city').attr("value", lastCity);
+        } else {
+            $('#search-city').attr("value", "Austin");
+        }
+    } else {
+        // Build key of last city written to localStorage
+        let lastCityKey="cities"+(localStorage.length-1);
+        lastCity=localStorage.getItem(lastCityKey);
+        // Set search input to last city searched
+        $('#search-city').attr("value", lastCity);
+        // Append stored cities to page
+        for (let i = 0; i < localStorage.length; i++) {
+            let city = localStorage.getItem("cities" + i);
+            let cityEl;
+            // Set to lastCity if currentCity not set
+            if (currentCity===""){
+                currentCity=lastCity;
+            }
+            // Set button class to active for currentCity
+            if (city === currentCity) {
+                cityEl = `<button type="button" class="list-group-item list-group-item-action active">${city}</button></li>`;
+            } else {
+                cityEl = `<button type="button" class="list-group-item list-group-item-action">${city}</button></li>`;
+            } 
+            
+            $('#city-results').prepend(cityEl);
+        }
+        // Add a "clear" button to page
+        if (localStorage.length>0){
+            $('#clear-storage').html($('<a id="clear-storage" href="#">clear</a>'));
+        } else {
+            $('#clear-storage').html('');
+        }
+    }
+    
+}
+
+// New city search button event listener
+$('#search-button').on("click", (event) => {
+event.preventDefault();
+currentCity = $('#search-city').val();
+getCurrentConditions(event);
 });
+
+// Old searched cities buttons event listener
+$('#city-results').on("click", (event) => {
+    event.preventDefault();
+    $('#search-city').val(event.target.textContent);
+    currentCity=$('#search-city').val();
+    getCurrentConditions(event);
+});
+
+// Clear old searched cities from localStorage event listener
+$("#clear-storage").on("click", (event) => {
+    localStorage.clear();
+    renderCities();
+});
+
+
+renderCities();
+
+getCurrentConditions();
